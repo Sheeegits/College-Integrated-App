@@ -1,4 +1,5 @@
 import express from "express";
+
 import { addCollege, getColleges, updateCollege } from "../controllers/collegeController.js";
 import { addCourse, getCoursesByCollege, updateCourse } from "../controllers/courseController.js";
 import { addFaculty, getFacultyByCollege, updateFaculty } from "../controllers/facultyController.js";
@@ -12,6 +13,29 @@ import {
 } from "../controllers/admissionProcessController.js";
 import { addHostel, getHostelByCollege, updateHostel } from "../controllers/hostelController.js";
 import { addCampus, getCampusByCollege, updateCampus } from "../controllers/campusController.js";
+
+import {
+  registerUser,
+  loginUser,
+  userDetails,
+  registerCollege,
+  loginCollege,
+  studentdetails,
+  reviewdetails,
+  cutoffdetails,
+  scholarshipdetails,
+} from "../userController/index.js";
+
+import {
+  studentRegisterValidate,
+  studentLoginValidate,
+  collegeRegisterValidate,
+  collegeLoginValidate,
+  studentdetailsValidate,
+  reviewsValidate,
+  cutoffsValidate,
+  scholarshipsValidate,
+} from "../utils/userValidation.js";
 const router = express.Router();
 
 // ✅ Apply `upload` only for `/add`
@@ -51,5 +75,15 @@ router.put("/hostel/update/:hostelId", upload.fields([{ name: "photos" }, { name
 router.post("/campus/add", upload.fields([{ name: "photos", maxCount: 5 }, { name: "videos", maxCount: 2 }]), addCampus);
 router.get("/campus/:collegeId", getCampusByCollege);
 router.put("/campus/update/:campusId", upload.fields([{ name: "photos" }, { name: "videos" }]), updateCampus);
+
+//Akkshit Routes
+router.post("/register", studentRegisterValidate, registerUser);
+router.post("/login", studentLoginValidate, loginUser);
+router.post("/collegeregister", collegeRegisterValidate, registerCollege);
+router.post("/collegelogin", collegeLoginValidate, loginCollege);
+router.post("/studentdetails", studentdetailsValidate, studentdetails);
+router.post("/reviews", reviewsValidate, reviewdetails);
+router.post("/cutoffs", cutoffsValidate, cutoffdetails);
+router.post("/scholarships", scholarshipsValidate, scholarshipdetails);
 
 export default router;
