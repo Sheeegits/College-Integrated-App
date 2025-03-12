@@ -16,12 +16,18 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    const resourceType = file.mimetype.startsWith("image/") ? "image" : "video"; // Detect Image or Video
+    let resourceType = "image"; // Default to image
+
+    if (file.mimetype.startsWith("video/")) {
+      resourceType = "video"; // If it's a video, change resource type
+    } else if (file.mimetype === "application/pdf") {
+      resourceType = "raw"; // ✅ Cloudinary requires PDFs to be "raw"
+    }
 
     return {
       folder: "college_details",
-      resource_type: resourceType, // Supports both images & videos
-      allowed_formats: ["jpg", "png", "pdf", "mp4", "avi", "mov"], // ✅ Added video formats
+      resource_type: resourceType, // ✅ Supports images, videos, and PDFs
+      allowed_formats: ["jpg", "png", "pdf", "mp4", "avi", "mov"], // ✅ Ensure "pdf" is included
     };
   },
 });

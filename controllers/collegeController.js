@@ -2,29 +2,40 @@ import mongoose from "mongoose";
 import College from "../models/College.js";
 
 // ✅ Add College
-export const addCollege = async (req, res) => {
+export const addColleges = async (req, res) => {
   try {
     console.log("Received Body:", req.body);
     console.log("Received Files:", req.files);
 
-    // ✅ Extract fields from `req.body`
-    const { name, location, ranking, collegeInfo } = req.body;
+    // ✅ Normalize keys in req.body
+    const body = Object.keys(req.body).reduce((acc, key) => {
+      acc[key.toLowerCase()] = req.body[key]; // Convert all keys to lowercase
+      return acc;
+    }, {});
+
+    // ✅ Extract fields from normalized body
+    const name = body.name;
+    const city = body.city;
+    const state = body.state;
+    const ranking = body.ranking;
+    const collegeInfo = body.collegeinfo || body.collegeInfo; // Handle both cases
 
     // ✅ Extract file URLs from `req.files`
     const image = req.files?.image ? req.files.image[0].path : null;
     const brochure = req.files?.brochure ? req.files.brochure[0].path : null;
 
     // ✅ Validate all required fields
-    if (!name || !location || !ranking || !collegeInfo || !image || !brochure) {
+    if (!name || !state || !city || !ranking || !collegeInfo || !image || !brochure) {
       return res.status(400).json({
-        message: "All fields (name, location, ranking, collegeInfo, image, brochure) are required",
+        message: "All fields (name, city, state, ranking, collegeInfo, image, brochure) are required",
       });
     }
 
     // ✅ Create new college entry
     const newCollege = new College({
       name,
-      location,
+      city,
+      state,
       ranking,
       collegeInfo,
       image,
@@ -32,7 +43,7 @@ export const addCollege = async (req, res) => {
     });
 
     await newCollege.save();
-    
+
     res.status(201).json({
       message: "College added successfully",
       college: newCollege,
@@ -41,11 +52,12 @@ export const addCollege = async (req, res) => {
   } catch (error) {
     console.error("Error adding college:", error);
     res.status(500).json({
+      success: false,
       message: "Server Error",
-      error: error.message,
+      error: error.toString(),
     });
   }
-};
+};  
 
 // ✅ Get All Colleges
 export const getColleges = async (req, res) => {
@@ -57,24 +69,26 @@ export const getColleges = async (req, res) => {
   }
 };
 
+// ✅ Update College
 export const updateCollege = async (req, res) => {
   try {
-    let { collegeId } = req.params;
+    const { collegeId } = req.params;
 
-    // ✅ Ensure `collegeId` is a string
-    collegeId = collegeId.trim();
-
-    // ✅ Convert `collegeId` to ObjectId properly
+    // ✅ Validate College ID
     if (!mongoose.Types.ObjectId.isValid(collegeId)) {
       return res.status(400).json({ message: "Invalid College ID format" });
     }
 
-    const { name, location, ranking, collegeInfo, image } = req.body;
+    const { name, state, city, ranking, collegeInfo } = req.body;
 
-    // ✅ Update the college
+    // ✅ Handle file updates (if new images are uploaded)
+    const image = req.files?.image ? req.files.image[0].path : undefined;
+    const brochure = req.files?.brochure ? req.files.brochure[0].path : undefined;
+
+    // ✅ Update the college (only update provided fields)
     const updatedCollege = await College.findByIdAndUpdate(
-      new mongoose.Types.ObjectId(collegeId), // ✅ Convert to ObjectId
-      { name, location, ranking, collegeInfo, image },
+      collegeId, 
+      { name, state, city, ranking, collegeInfo, ...(image && { image }), ...(brochure && { brochure }) }, 
       { new: true, runValidators: true }
     );
 
@@ -94,8 +108,3 @@ export const updateCollege = async (req, res) => {
 };
 
 
-export default {
-  addCollege,
-  getColleges,
-  updateCollege,
-};
